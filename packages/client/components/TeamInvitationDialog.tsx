@@ -13,6 +13,7 @@ import TeamInvitationErrorExpired from './TeamInvitationErrorExpired'
 import TeamInvitationErrorNotFound from './TeamInvitationErrorNotFound'
 import TeamInvitationGoogleCreateAccount from './TeamInvitationGoogleCreateAccount'
 import TeamInvitationGoogleSignin from './TeamInvitationGoogleSignin'
+import TeamInvitationOIDC from './TeamInvitationOIDC'
 import TeamInvitationSSO from './TeamInvitationSSO'
 
 interface Props {
@@ -62,6 +63,9 @@ const TeamInvitationDialog = (props: Props) => {
   }
   if (isLoggedIn) {
     return <TeamInvitationAccept invitationToken={invitationToken} />
+  }
+  if (window.__ACTION__.AUTH_OIDC_ENABLED) {
+    return <TeamInvitationOIDC />
   }
   if (ssoURL) {
     return <TeamInvitationSSO ssoURL={ssoURL} />
