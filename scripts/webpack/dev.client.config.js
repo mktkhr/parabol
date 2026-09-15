@@ -11,6 +11,7 @@ const PROJECT_ROOT = getProjectRoot()
 const CLIENT_ROOT = path.join(PROJECT_ROOT, 'packages', 'client')
 const STATIC_ROOT = path.join(PROJECT_ROOT, 'static')
 const {PORT, SOCKET_PORT, HOST} = process.env
+const isOIDCEnabled = !!process.env.OIDC_ISSUER
 
 // When using ngrok, we want localhost to run with http
 const isProxiedDev = HOST !== 'localhost'
@@ -59,6 +60,7 @@ module.exports = {
         'assets',
         // important terminating / so saml-redirect doesn't get targeted, too
         'saml/',
+        'oidc/',
         'scim',
         'oauth',
         'zoom'
@@ -141,10 +143,12 @@ module.exports = {
         oauth2Redirect: makeOAuth2Redirect(),
         hasOpenAI: !!process.env.OPEN_AI_API_KEY,
         prblIn: process.env.INVITATION_SHORTLINK,
-        AUTH_INTERNAL_ENABLED: process.env.AUTH_INTERNAL_DISABLED !== 'true',
-        AUTH_GOOGLE_ENABLED: process.env.AUTH_GOOGLE_DISABLED !== 'true',
-        AUTH_MICROSOFT_ENABLED: process.env.AUTH_MICROSOFT_DISABLED !== 'true',
-        AUTH_SSO_ENABLED: process.env.AUTH_SSO_DISABLED !== 'true',
+        AUTH_INTERNAL_ENABLED: !isOIDCEnabled && process.env.AUTH_INTERNAL_DISABLED !== 'true',
+        AUTH_GOOGLE_ENABLED: !isOIDCEnabled && process.env.AUTH_GOOGLE_DISABLED !== 'true',
+        AUTH_MICROSOFT_ENABLED: !isOIDCEnabled && process.env.AUTH_MICROSOFT_DISABLED !== 'true',
+        AUTH_SSO_ENABLED: !isOIDCEnabled && process.env.AUTH_SSO_DISABLED !== 'true',
+        AUTH_OIDC_ENABLED: isOIDCEnabled,
+        OIDC_BUTTON_LABEL: process.env.OIDC_BUTTON_LABEL || 'Log in with SSO',
         AMPLITUDE_WRITE_KEY: process.env.AMPLITUDE_WRITE_KEY,
         microsoftTenantId: process.env.MICROSOFT_TENANT_ID,
         microsoft: process.env.MICROSOFT_CLIENT_ID,

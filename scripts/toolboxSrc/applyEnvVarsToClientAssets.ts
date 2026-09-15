@@ -46,6 +46,7 @@ const writeManifest = () => {
 }
 
 const rewriteIndexHTML = () => {
+  const isOIDCEnabled = !!process.env.OIDC_ISSUER
   const clientKeys = {
     datadogClientToken: process.env.DD_CLIENTTOKEN,
     datadogService: process.env.DD_SERVICE,
@@ -60,10 +61,12 @@ const rewriteIndexHTML = () => {
     oauth2Redirect: makeOAuth2Redirect(),
     hasOpenAI: !!process.env.OPEN_AI_API_KEY,
     prblIn: process.env.INVITATION_SHORTLINK,
-    AUTH_INTERNAL_ENABLED: process.env.AUTH_INTERNAL_DISABLED !== 'true',
-    AUTH_GOOGLE_ENABLED: process.env.AUTH_GOOGLE_DISABLED !== 'true',
-    AUTH_MICROSOFT_ENABLED: process.env.AUTH_MICROSOFT_DISABLED !== 'true',
-    AUTH_SSO_ENABLED: process.env.AUTH_SSO_DISABLED !== 'true',
+    AUTH_INTERNAL_ENABLED: !isOIDCEnabled && process.env.AUTH_INTERNAL_DISABLED !== 'true',
+    AUTH_GOOGLE_ENABLED: !isOIDCEnabled && process.env.AUTH_GOOGLE_DISABLED !== 'true',
+    AUTH_MICROSOFT_ENABLED: !isOIDCEnabled && process.env.AUTH_MICROSOFT_DISABLED !== 'true',
+    AUTH_SSO_ENABLED: !isOIDCEnabled && process.env.AUTH_SSO_DISABLED !== 'true',
+    AUTH_OIDC_ENABLED: isOIDCEnabled,
+    OIDC_BUTTON_LABEL: process.env.OIDC_BUTTON_LABEL || 'Log in with SSO',
     AMPLITUDE_WRITE_KEY: process.env.AMPLITUDE_WRITE_KEY,
     microsoftTenantId: process.env.MICROSOFT_TENANT_ID,
     microsoft: process.env.MICROSOFT_CLIENT_ID,
