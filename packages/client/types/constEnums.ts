@@ -16,7 +16,8 @@ export enum AppBar {
 export enum AuthIdentityTypeEnum {
   LOCAL = 'LOCAL',
   GOOGLE = 'GOOGLE',
-  MICROSOFT = 'MICROSOFT'
+  MICROSOFT = 'MICROSOFT',
+  OIDC = 'OIDC'
 }
 
 // https://github.com/material-components/material-components-web/blob/4844330e7836d9dc97798b47594ff0dbaac51227/packages/mdc-animation/_variables.scss

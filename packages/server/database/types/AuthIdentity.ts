@@ -1,4 +1,4 @@
-export type TAuthIdentity = 'GOOGLE' | 'LOCAL' | 'MICROSOFT'
+export type TAuthIdentity = 'GOOGLE' | 'LOCAL' | 'MICROSOFT' | 'OIDC'
 
 interface Input {
   id: string
