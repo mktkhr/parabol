@@ -24,9 +24,15 @@ services:
       - --save
       - ""
       - --user
-      - default off
+      - default
+      - off
       - --user
-      - ${VALKEY_USER} on >${VALKEY_PASSWORD} ~* &* +@all
+      - ${VALKEY_USER}
+      - on
+      - ">${VALKEY_PASSWORD}"
+      - "~*"
+      - "&*"
+      - "+@all"
     volumes:
       - valkey-data:/data
     healthcheck:
