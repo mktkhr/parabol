@@ -1,0 +1,13 @@
+.git
+node_modules
+**/node_modules
+build
+dist
+dev
+compose
+docker/stacks
+**/*.env
+.env
+!.env.example
+**/__tests__
+**/*.test.ts
