@@ -1,0 +1,117 @@
+name: parabol
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.6-pg18-trixie@sha256:78bf48b801e792f99e3ac62b5036fd3876e9be48afda16c1e331af1c75ceb2ff
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  valkey:
+    image: valkey/valkey:9.1.2-alpine@sha256:a0dbf4c1d5708782907c10e2c72deff317518518b5288a58416981d9db95d30b
+    restart: unless-stopped
+    command:
+      - valkey-server
+      - --save
+      - ""
+      - --user
+      - default off
+      - --user
+      - ${VALKEY_USER} on >${VALKEY_PASSWORD} ~* &* +@all
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli --user $${VALKEY_USER} --pass $${VALKEY_PASSWORD} ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    environment:
+      VALKEY_USER: ${VALKEY_USER}
+      VALKEY_PASSWORD: ${VALKEY_PASSWORD}
+
+  llama-swap:
+    image: ${LLAMA_SWAP_IMAGE:-ghcr.io/mostlygeek/llama-swap:unified-cuda-rootless-2026-09-15@sha256:1e7385d839d533315f0fb8fdb013de603b853cfc2491aa1fbb7ea53fbb103210}
+    restart: unless-stopped
+    environment:
+      LLAMA_GENERATION_MODEL: ${LLAMA_GENERATION_MODEL}
+      LLAMA_EMBEDDING_MODEL: ${LLAMA_EMBEDDING_MODEL}
+      LLAMA_CACHE: /models/cache
+      LLAMA_SWAP_WATCH_CONFIG: "false"
+    volumes:
+      - ./llama-swap/config.yaml:/etc/llama-swap/config/config.yaml:ro
+      - llama-models:/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: ${LLAMA_GPU_COUNT:-all}
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || wget -qO- http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 40
+      start_period: 120s
+
+  parabol-web:
+    build:
+      context: ..
+      dockerfile: compose/Dockerfile
+    image: parabol-fork:${PARABOL_IMAGE_TAG:-local}
+    restart: unless-stopped
+    command: ["sh", "-c", "node dist/preDeploy.js && node dist/web.js"]
+    env_file: .env
+    environment:
+      SERVER_ID: "0"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      REDIS_URL: redis://${VALKEY_USER}:${VALKEY_PASSWORD}@valkey:6379
+      OPENAI_BASE_URL: http://llama-swap:8080/v1
+    ports:
+      - "${PARABOL_PORT:-3000}:3000"
+    volumes:
+      - parabol-files:/home/node/parabol/self-hosted
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      llama-swap:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  parabol-embedder:
+    image: parabol-fork:${PARABOL_IMAGE_TAG:-local}
+    restart: unless-stopped
+    command: ["node", "dist/embedder.js"]
+    env_file: .env
+    environment:
+      SERVER_ID: "5"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      REDIS_URL: redis://${VALKEY_USER}:${VALKEY_PASSWORD}@valkey:6379
+      OPENAI_BASE_URL: http://llama-swap:8080/v1
+    depends_on:
+      parabol-web:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  valkey-data:
+  llama-models:
+  parabol-files:
