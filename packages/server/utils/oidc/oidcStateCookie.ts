@@ -11,8 +11,12 @@ const COOKIE_NAME = '__Host-oidc'
 const COOKIE_LIFESPAN_MS = 10 * 60 * 1000
 const DEFAULT_RETURN_TO = '/meetings'
 
+const PRINTABLE_ASCII = /^[\x21-\x7e]+$/
+
 export const sanitizeReturnTo = (raw: string | null | undefined) =>
-  raw && raw.startsWith('/') && !['/', '\\'].includes(raw[1] ?? '') ? raw : DEFAULT_RETURN_TO
+  raw && raw.startsWith('/') && !['/', '\\'].includes(raw[1] ?? '') && PRINTABLE_ASCII.test(raw)
+    ? raw
+    : DEFAULT_RETURN_TO
 
 const buildCookie = (value: string, expires: number) =>
   getCookieString({
