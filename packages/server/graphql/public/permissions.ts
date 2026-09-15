@@ -5,6 +5,7 @@ import {hasOrgRole} from './rules/hasOrgRole'
 import {hasPageAccess} from './rules/hasPageAccess'
 import {hasProviderAccess} from './rules/hasProviderAccess'
 import isAuthenticated from './rules/isAuthenticated'
+import isAuthMethodEnabled from './rules/isAuthMethodEnabled'
 import isEnvVarTrue from './rules/isEnvVarTrue'
 import {isMeetingFacilitator} from './rules/isMeetingFacilitator'
 import {isMeetingMember} from './rules/isMeetingMember'
@@ -169,16 +170,13 @@ const permissionMap: PermissionMap<Resolvers> = {
     joinMeeting: isTeamMemberOfMeeting<'Mutation.joinMeeting'>('args.meetingId'),
     joinTeam: isViewerOnOrg<'Mutation.joinTeam'>('args.teamId', 'teams'),
     linkMattermostChannel: isTeamMember<'Mutation.linkMattermostChannel'>('args.teamId'),
-    loginWithGoogle: and(
-      not(isEnvVarTrue('AUTH_GOOGLE_DISABLED')),
-      rateLimit({perMinute: 50, perHour: 500})
-    ),
+    loginWithGoogle: and(isAuthMethodEnabled('GOOGLE'), rateLimit({perMinute: 50, perHour: 500})),
     loginWithMicrosoft: and(
-      not(isEnvVarTrue('AUTH_MICROSOFT_DISABLED')),
+      isAuthMethodEnabled('MICROSOFT'),
       rateLimit({perMinute: 50, perHour: 500})
     ),
     loginWithPassword: and(
-      not(isEnvVarTrue('AUTH_INTERNAL_DISABLED')),
+      isAuthMethodEnabled('INTERNAL'),
       rateLimit({perMinute: 50, perHour: 500})
     ),
     modifyCheckInQuestion: isMeetingFacilitator<'Mutation.modifyCheckInQuestion'>('args.meetingId'),
@@ -334,7 +332,7 @@ const permissionMap: PermissionMap<Resolvers> = {
     shareTopic: isTeamMember<'Mutation.shareTopic'>('args.meetingId', 'newMeetings'),
     signOut: allow,
     signUpWithPassword: and(
-      not(isEnvVarTrue('AUTH_INTERNAL_DISABLED')),
+      isAuthMethodEnabled('INTERNAL'),
       rateLimit({perMinute: 50, perHour: 500})
     ),
     startCheckIn: isTeamMember<'Mutation.startCheckIn'>('args.teamId'),

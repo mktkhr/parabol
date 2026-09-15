@@ -12,6 +12,7 @@ import updateUser from '../../../postgres/queries/updateUser'
 import {setAuthCookie} from '../../../utils/authCookie'
 import {blacklistJWT} from '../../../utils/blacklistJWT'
 import {toEpochSeconds} from '../../../utils/epochTime'
+import {isAuthMethodDisabled} from '../../../utils/isAuthMethodDisabled'
 import standardError from '../../../utils/standardError'
 import type {MutationResolvers} from '../resolverTypes'
 
@@ -20,7 +21,7 @@ const resetPassword: MutationResolvers['resetPassword'] = async (
   {token, newPassword},
   context
 ) => {
-  if (process.env.AUTH_INTERNAL_DISABLED === 'true') {
+  if (isAuthMethodDisabled('INTERNAL')) {
     return {error: {message: 'Resetting password is disabled'}}
   }
   const pg = getKysely()

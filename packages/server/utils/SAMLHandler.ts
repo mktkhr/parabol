@@ -4,6 +4,7 @@ import parseBody from '../parseBody'
 import {createCookieHeaders} from './authCookie'
 import {callGQL} from './callGQL'
 import getVerifiedAuthToken from './getVerifiedAuthToken'
+import {isAuthMethodDisabled} from './isAuthMethodDisabled'
 
 const query = `
 mutation LoginSAML($queryString: String!, $samlName: ID!) {
@@ -41,6 +42,10 @@ const redirectOnError = (res: HttpResponse, error: string) => {
 const GENERIC_ERROR = 'Error signing in|Please try again'
 
 const SAMLHandler = uWSAsyncHandler(async (res: HttpResponse, req: HttpRequest) => {
+  if (isAuthMethodDisabled('SSO')) {
+    res.writeStatus('403').end()
+    return
+  }
   const samlName = req.getParameter(0)
   if (!samlName) {
     redirectOnError(res, 'Invalid redirect URL!|Did you set up the service provider correctly?')
