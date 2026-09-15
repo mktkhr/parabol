@@ -17,6 +17,8 @@ import ForgotPasswordPage from './ForgotPasswordPage'
 import GoogleOAuthButtonBlock from './GoogleOAuthButtonBlock'
 import HorizontalSeparator from './HorizontalSeparator/HorizontalSeparator'
 import MicrosoftOAuthButtonBlock from './MicrosoftOAuthButtonBlock'
+import OIDCErrorMessage from './OIDCErrorMessage'
+import OIDCLoginButton from './OIDCLoginButton'
 import PlainButton from './PlainButton/PlainButton'
 import SubmittedForgotPasswordPage from './SubmittedForgotPasswordPage'
 
@@ -47,6 +49,7 @@ const GenericAuthentication = (props: Props) => {
   const isMicrosoftAuthEnabled = window.__ACTION__.AUTH_MICROSOFT_ENABLED
   const isInternalAuthEnabled = window.__ACTION__.AUTH_INTERNAL_ENABLED
   const isSSOAuthEnabled = window.__ACTION__.AUTH_SSO_ENABLED
+  const isOIDCAuthEnabled = window.__ACTION__.AUTH_OIDC_ENABLED
   const isCreate = page === 'create-account'
   const action = isCreate ? CREATE_ACCOUNT_LABEL : SIGNIN_LABEL
   const pageTitle = `${action} | Parabol`
@@ -77,54 +80,64 @@ const GenericAuthentication = (props: Props) => {
   return (
     <AuthenticationDialog ref={authDialogRef}>
       <DialogTitle>{title}</DialogTitle>
-      <div className='pt-4 pb-2 font-normal text-sm leading-normal'>
-        <span>{actionCopy}</span>
-        <PlainButton
-          className='text-accent hover:underline focus:underline'
-          onClick={() => goToPage(counterActionSlug, location.search)}
-        >
-          {counterAction}
-        </PlainButton>
-      </div>
-      {isGoogleAuthEnabled && (
-        <GoogleOAuthButtonBlock
-          isCreate={isCreate}
-          invitationToken={invitationToken}
-          getOffsetTop={getOffsetTop}
-        />
-      )}
-      {isMicrosoftAuthEnabled && (
-        <MicrosoftOAuthButtonBlock
-          isCreate={isCreate}
-          invitationToken={invitationToken}
-          getOffsetTop={getOffsetTop}
-        />
-      )}
-      {(isGoogleAuthEnabled || isMicrosoftAuthEnabled) &&
-        (isInternalAuthEnabled || isSSOAuthEnabled) && (
-          <HorizontalSeparator margin='1rem 0 0' text='or' />
-        )}
-      {(isInternalAuthEnabled || isSSOAuthEnabled) && (
-        <EmailPasswordAuthForm
-          email={email || ''}
-          isSignin={!isCreate}
-          invitationToken={invitationToken}
-          ref={emailRef}
-          getOffsetTop={getOffsetTop}
-          goToPage={goToPage}
-        />
-      )}
-      {isCreate ? (
-        <AuthPrivacyFooter />
+      {isOIDCAuthEnabled ? (
+        <>
+          <OIDCErrorMessage />
+          <OIDCLoginButton />
+          {isCreate && <AuthPrivacyFooter />}
+        </>
       ) : (
-        isInternalAuthEnabled && (
-          <PlainButton
-            className='mt-2 text-center text-[11px] text-accent leading-6'
-            onClick={onForgot}
-          >
-            {'Forgot your password?'}
-          </PlainButton>
-        )
+        <>
+          <div className='pt-4 pb-2 font-normal text-sm leading-normal'>
+            <span>{actionCopy}</span>
+            <PlainButton
+              className='text-accent hover:underline focus:underline'
+              onClick={() => goToPage(counterActionSlug, location.search)}
+            >
+              {counterAction}
+            </PlainButton>
+          </div>
+          {isGoogleAuthEnabled && (
+            <GoogleOAuthButtonBlock
+              isCreate={isCreate}
+              invitationToken={invitationToken}
+              getOffsetTop={getOffsetTop}
+            />
+          )}
+          {isMicrosoftAuthEnabled && (
+            <MicrosoftOAuthButtonBlock
+              isCreate={isCreate}
+              invitationToken={invitationToken}
+              getOffsetTop={getOffsetTop}
+            />
+          )}
+          {(isGoogleAuthEnabled || isMicrosoftAuthEnabled) &&
+            (isInternalAuthEnabled || isSSOAuthEnabled) && (
+              <HorizontalSeparator margin='1rem 0 0' text='or' />
+            )}
+          {(isInternalAuthEnabled || isSSOAuthEnabled) && (
+            <EmailPasswordAuthForm
+              email={email || ''}
+              isSignin={!isCreate}
+              invitationToken={invitationToken}
+              ref={emailRef}
+              getOffsetTop={getOffsetTop}
+              goToPage={goToPage}
+            />
+          )}
+          {isCreate ? (
+            <AuthPrivacyFooter />
+          ) : (
+            isInternalAuthEnabled && (
+              <PlainButton
+                className='mt-2 text-center text-[11px] text-accent leading-6'
+                onClick={onForgot}
+              >
+                {'Forgot your password?'}
+              </PlainButton>
+            )
+          )}
+        </>
       )}
     </AuthenticationDialog>
   )
