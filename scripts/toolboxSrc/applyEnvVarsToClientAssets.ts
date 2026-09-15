@@ -46,7 +46,11 @@ const writeManifest = () => {
 }
 
 const rewriteIndexHTML = () => {
-  const isOIDCEnabled = !!process.env.OIDC_ISSUER
+  const isOIDCEnabled = !!(
+    process.env.OIDC_ISSUER &&
+    process.env.OIDC_CLIENT_ID &&
+    process.env.OIDC_CLIENT_SECRET
+  )
   const clientKeys = {
     datadogClientToken: process.env.DD_CLIENTTOKEN,
     datadogService: process.env.DD_SERVICE,

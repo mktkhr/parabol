@@ -105,3 +105,19 @@ test('rejects an email longer than the preferred name limit', async () => {
   expect(mockedGetUserByEmail).not.toHaveBeenCalled()
   expect(mockedBootstrap).not.toHaveBeenCalled()
 })
+
+test('rejects an unverified email from the identity provider', async () => {
+  const result = await resolveOIDCUser({...profile, emailVerified: false}, true, dataLoader)
+  expect(result).toEqual({error: 'email_unverified'})
+  expect(mockedGetUserByEmail).not.toHaveBeenCalled()
+  expect(mockedBootstrap).not.toHaveBeenCalled()
+})
+
+test('trusts the email when the provider omits email_verified', async () => {
+  mockedGetUserByEmail.mockResolvedValue(null)
+  mockedBootstrap.mockImplementation(async (newUser) => new AuthToken({sub: newUser.id, tms: []}))
+  await resolveOIDCUser(profile, true, dataLoader)
+  expect(mockedBootstrap.mock.calls[0]![0].identities).toEqual([
+    {type: 'OIDC', id: 'sub-1', isEmailVerified: true}
+  ])
+})

@@ -459,7 +459,7 @@ const permissionMap: PermissionMap<Resolvers> = {
     ),
     upsertTeamPromptResponse:
       isMeetingMember<'Mutation.upsertTeamPromptResponse'>('args.meetingId'),
-    verifyEmail: rateLimit({perMinute: 50, perHour: 100}),
+    verifyEmail: and(isAuthMethodEnabled('INTERNAL'), rateLimit({perMinute: 50, perHour: 100})),
     voteForPokerStory: isMeetingMember<'Mutation.voteForPokerStory'>('args.meetingId'),
     voteForReflectionGroup: isMeetingMember<'Mutation.voteForReflectionGroup'>(
       'args.reflectionGroupId',

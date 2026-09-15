@@ -28,12 +28,15 @@ const redirectOnError = (res: HttpResponse, error: OIDCError, returnTo?: string)
 const pickString = (...values: unknown[]) =>
   values.find((value): value is string => typeof value === 'string' && value.length > 0)
 
+const pickBoolean = (...values: unknown[]) =>
+  values.find((value): value is boolean => typeof value === 'boolean')
+
 const OIDCCallbackHandler = uWSAsyncHandler(async (res: HttpResponse, req: HttpRequest) => {
   const query = req.getQuery()
   const cookieHeader = req.getHeader('cookie')
   const env = getOIDCEnv()
   if (!env) {
-    res.writeStatus('404').end()
+    res.writeStatus('404').writeHeader('set-cookie', clearOIDCStateCookieHeader()).end()
     return
   }
   const stored = parseOIDCStateCookie(cookieHeader)
@@ -98,7 +101,8 @@ const OIDCCallbackHandler = uWSAsyncHandler(async (res: HttpResponse, req: HttpR
         sub: claims.sub,
         email,
         name: pickString(claims.name, userinfo?.name),
-        preferredUsername: pickString(claims.preferred_username, userinfo?.preferred_username)
+        preferredUsername: pickString(claims.preferred_username, userinfo?.preferred_username),
+        emailVerified: pickBoolean(claims.email_verified, userinfo?.email_verified)
       },
       isOrganic,
       dataLoader
@@ -119,6 +123,9 @@ const OIDCCallbackHandler = uWSAsyncHandler(async (res: HttpResponse, req: HttpR
       .writeHeader('set-cookie', clearOIDCStateCookieHeader())
       .writeHeader('location', location)
       .end()
+  } catch (error) {
+    Logger.warn('OIDC user resolution failed', error)
+    redirectOnError(res, 'idp_error', stored.returnTo)
   } finally {
     dataLoader.dispose()
   }

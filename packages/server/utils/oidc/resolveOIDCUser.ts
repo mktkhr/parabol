@@ -15,9 +15,10 @@ export interface OIDCProfile {
   email: string
   name?: string
   preferredUsername?: string
+  emailVerified?: boolean
 }
 
-export type OIDCUserError = 'squatter' | 'email_too_long'
+export type OIDCUserError = 'squatter' | 'email_too_long' | 'email_unverified'
 
 export type ResolveOIDCUserResult =
   | {authToken: AuthToken; userId: string; isNewUser: boolean}
@@ -29,7 +30,9 @@ export const resolveOIDCUser = async (
   dataLoader: DataLoaderWorker
 ): Promise<ResolveOIDCUserResult> => {
   const {sub, name, preferredUsername} = profile
+  if (profile.emailVerified === false) return {error: 'email_unverified'}
   const email = profile.email.toLowerCase()
+  const isEmailVerified = profile.emailVerified ?? true
   if (email.length > USER_PREFERRED_NAME_LIMIT) return {error: 'email_too_long'}
 
   const existingUser = await getUserByEmail(email)
@@ -41,7 +44,7 @@ export const resolveOIDCUser = async (
     if (!hasOIDCIdentity) {
       const [bestIdentity] = identities
       if (bestIdentity && !bestIdentity.isEmailVerified) return {error: 'squatter'}
-      identities.push(new AuthIdentityOIDC({id: sub, isEmailVerified: true}))
+      identities.push(new AuthIdentityOIDC({id: sub, isEmailVerified}))
       await updateUser({identities: identities.map((identity) => JSON.stringify(identity))}, userId)
     }
     const tms = await dataLoader.get('teamIdsByUserId').load(userId)
@@ -56,7 +59,7 @@ export const resolveOIDCUser = async (
     preferredName,
     picture: await generateIdenticon(userId, preferredName),
     email,
-    identities: [new AuthIdentityOIDC({id: sub, isEmailVerified: true})]
+    identities: [new AuthIdentityOIDC({id: sub, isEmailVerified})]
   })
   const authToken = await bootstrapNewUser(newUser, isOrganic, dataLoader)
   return {authToken, userId, isNewUser: true}
