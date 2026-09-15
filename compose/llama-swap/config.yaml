@@ -9,6 +9,7 @@ models:
   generation:
     aliases:
       - gpt-5.6-luna
+      - gpt-4-turbo-preview
     ttl: 0
     filters:
       stripParams: "reasoning_effort"
@@ -30,6 +31,7 @@ models:
       --embedding
       --pooling last
       -ngl 0
+      --device none
       -c 4096
       -ub 4096
       -b 4096
