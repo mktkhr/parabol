@@ -21,6 +21,8 @@ import selfHostedHandler from './selfHostedHandler'
 import {createStaticFileHandler} from './staticFileHandler'
 import getReqAuth from './utils/getReqAuth'
 import {Logger} from './utils/Logger'
+import OIDCCallbackHandler from './utils/oidc/OIDCCallbackHandler'
+import OIDCLoginHandler from './utils/oidc/OIDCLoginHandler'
 import SAMLHandler from './utils/SAMLHandler'
 import uwsGetIP from './utils/uwsGetIP'
 import {wsHandler} from './wsHandler'
@@ -79,6 +81,8 @@ const app = uws
     return yoga(res, req, {authToken, ip})
   })
   .post('/saml/:domain', SAMLHandler)
+  .get('/oidc/login', OIDCLoginHandler)
+  .get('/oidc/callback', OIDCCallbackHandler)
   .get('/oauth/authorize', authorizeHandler)
   .post('/oauth/token', tokenHandler)
   .ws('/yjs', hocusPocusHandler)
