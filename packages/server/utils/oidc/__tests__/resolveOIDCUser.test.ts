@@ -5,6 +5,7 @@ process.env.PORT = '3000'
 import AuthToken from '../../../database/types/AuthToken'
 import type {DataLoaderWorker} from '../../../graphql/graphql'
 import bootstrapNewUser from '../../../graphql/mutations/helpers/bootstrapNewUser'
+import {USER_PREFERRED_NAME_LIMIT} from '../../../postgres/constants'
 import {getUserByEmail} from '../../../postgres/queries/getUsersByEmails'
 import updateUser from '../../../postgres/queries/updateUser'
 import {resolveOIDCUser} from '../resolveOIDCUser'
@@ -95,4 +96,12 @@ test('rejects an unverified local account (squatter)', async () => {
   const result = await resolveOIDCUser(profile, true, dataLoader)
   expect(result).toEqual({error: 'squatter'})
   expect(mockedUpdateUser).not.toHaveBeenCalled()
+})
+
+test('rejects an email longer than the preferred name limit', async () => {
+  const email = `${'a'.repeat(USER_PREFERRED_NAME_LIMIT)}@example.com`
+  const result = await resolveOIDCUser({sub: 's', email}, true, dataLoader)
+  expect(result).toEqual({error: 'email_too_long'})
+  expect(mockedGetUserByEmail).not.toHaveBeenCalled()
+  expect(mockedBootstrap).not.toHaveBeenCalled()
 })
