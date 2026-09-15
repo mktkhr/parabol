@@ -1,0 +1,45 @@
+healthCheckTimeout: 600
+logRequests: false
+
+macros:
+  generation_model: ${env.LLAMA_GENERATION_MODEL}
+  embedding_model: ${env.LLAMA_EMBEDDING_MODEL}
+
+models:
+  generation:
+    aliases:
+      - gpt-5.6-luna
+    ttl: 0
+    filters:
+      stripParams: "reasoning_effort"
+    cmd: >
+      llama-server
+      --port ${PORT}
+      -hf ${generation_model}
+      --jinja
+      -ngl 99
+      -c 8192
+      --no-webui
+
+  embedding:
+    ttl: 0
+    cmd: >
+      llama-server
+      --port ${PORT}
+      -hf ${embedding_model}
+      --embedding
+      --pooling last
+      -ngl 0
+      -c 4096
+      -ub 4096
+      -b 4096
+      --no-webui
+
+groups:
+  always-on:
+    swap: false
+    exclusive: false
+    persistent: true
+    members:
+      - generation
+      - embedding
