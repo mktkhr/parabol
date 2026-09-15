@@ -14,11 +14,14 @@ type OIDCError = OIDCUserError | 'invalid_state' | 'idp_error' | 'email_missing'
 
 const INVITATION_PATHS = ['/team-invitation/', '/invitation-link/']
 
-const redirectOnError = (res: HttpResponse, error: OIDCError) => {
+const redirectOnError = (res: HttpResponse, error: OIDCError, returnTo?: string) => {
+  const location = returnTo?.startsWith('/saml-redirect')
+    ? `/saml-redirect?error=${error}`
+    : `/?oidcError=${error}`
   res
     .writeStatus('302')
     .writeHeader('set-cookie', clearOIDCStateCookieHeader())
-    .writeHeader('location', `/?oidcError=${error}`)
+    .writeHeader('location', location)
     .end()
 }
 
@@ -50,12 +53,12 @@ const OIDCCallbackHandler = uWSAsyncHandler(async (res: HttpResponse, req: HttpR
     })
   } catch (error) {
     Logger.warn('OIDC token exchange failed', error)
-    redirectOnError(res, 'idp_error')
+    redirectOnError(res, 'idp_error', stored.returnTo)
     return
   }
   const claims = tokens.claims()
   if (!claims) {
-    redirectOnError(res, 'idp_error')
+    redirectOnError(res, 'idp_error', stored.returnTo)
     return
   }
 
@@ -66,14 +69,14 @@ const OIDCCallbackHandler = uWSAsyncHandler(async (res: HttpResponse, req: HttpR
       userinfo = await client.fetchUserInfo(config, tokens.access_token, claims.sub)
     } catch (error) {
       Logger.warn('OIDC userinfo request failed', error)
-      redirectOnError(res, 'idp_error')
+      redirectOnError(res, 'idp_error', stored.returnTo)
       return
     }
   }
 
   const email = pickString(claims.email, userinfo?.email)
   if (!email) {
-    redirectOnError(res, 'email_missing')
+    redirectOnError(res, 'email_missing', stored.returnTo)
     return
   }
   if (env.groupsClaim) {
@@ -82,7 +85,7 @@ const OIDCCallbackHandler = uWSAsyncHandler(async (res: HttpResponse, req: HttpR
       ...extractGroups(userinfo, env.groupsClaim)
     ]
     if (!isGroupAllowed(groups, env.allowedGroups)) {
-      redirectOnError(res, 'not_allowed')
+      redirectOnError(res, 'not_allowed', stored.returnTo)
       return
     }
   }
@@ -101,17 +104,20 @@ const OIDCCallbackHandler = uWSAsyncHandler(async (res: HttpResponse, req: HttpR
       dataLoader
     )
     if ('error' in result) {
-      redirectOnError(res, result.error)
+      redirectOnError(res, result.error, stored.returnTo)
       return
     }
     Logger.log(`OIDC login: ${result.isNewUser ? 'created' : 'signed in'} ${result.userId}`)
+    const location = stored.returnTo.startsWith('/saml-redirect')
+      ? `/saml-redirect?userId=${encodeURIComponent(result.userId)}&isNewUser=${result.isNewUser}`
+      : stored.returnTo
     res.writeStatus('302')
     createCookieHeaders(result.authToken).forEach((header) => {
       res.writeHeader('set-cookie', header)
     })
     res
       .writeHeader('set-cookie', clearOIDCStateCookieHeader())
-      .writeHeader('location', stored.returnTo)
+      .writeHeader('location', location)
       .end()
   } finally {
     dataLoader.dispose()

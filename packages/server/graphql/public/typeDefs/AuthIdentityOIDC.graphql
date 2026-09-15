@@ -1,0 +1,17 @@
+"""
+An authentication identity backed by a generic OpenID Connect provider. A user account may have this identity if they signed up or linked their account via "Sign in with SSO" against the identity provider configured with OIDC_ISSUER. Use this type (via the AuthIdentity interface) to distinguish OIDC-authenticated users from those using local passwords, Google, or Microsoft OAuth.
+"""
+type AuthIdentityOIDC implements AuthIdentity {
+  """
+  true if the email address associated with this OIDC identity has been verified by the identity provider, else false. Sourced from the provider's email_verified claim; if the provider omits that claim, the email is trusted.
+  """
+  isEmailVerified: Boolean!
+  """
+  The authentication strategy discriminator. Always OIDC for this type. Use this field when you need to branch logic based on how the user authenticates (e.g. to show the correct "sign in with" button or to filter identities by provider).
+  """
+  type: AuthIdentityTypeEnum!
+  """
+  The unique subject identifier (the "sub" claim from the identity provider's ID token) for this identity. Use this to correlate the Parabol user with a specific account at the identity provider, or to look up the identity when a user has multiple auth strategies on their account.
+  """
+  id: ID!
+}

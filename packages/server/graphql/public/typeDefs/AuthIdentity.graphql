@@ -1,5 +1,5 @@
 """
-An authentication strategy linked to a Parabol user account. A user may have multiple identities (e.g. both a local password and a Google SSO login). Concrete implementations are AuthIdentityLocal, AuthIdentityGoogle, and AuthIdentityMicrosoft. Use the type field to discriminate between them.
+An authentication strategy linked to a Parabol user account. A user may have multiple identities (e.g. both a local password and a Google SSO login). Concrete implementations are AuthIdentityLocal, AuthIdentityGoogle, AuthIdentityMicrosoft, and AuthIdentityOIDC. Use the type field to discriminate between them.
 """
 interface AuthIdentity {
   """
@@ -7,7 +7,7 @@ interface AuthIdentity {
   """
   isEmailVerified: Boolean!
   """
-  Discriminator that identifies which concrete identity type this is (LOCAL, GOOGLE, or MICROSOFT). Use this to determine whether to cast to AuthIdentityLocal, AuthIdentityGoogle, or AuthIdentityMicrosoft when you need provider-specific fields such as the OAuth provider ID.
+  Discriminator that identifies which concrete identity type this is (LOCAL, GOOGLE, MICROSOFT, or OIDC). Use this to determine whether to cast to AuthIdentityLocal, AuthIdentityGoogle, AuthIdentityMicrosoft, or AuthIdentityOIDC when you need provider-specific fields such as the OAuth provider ID.
   """
   type: AuthIdentityTypeEnum!
 }

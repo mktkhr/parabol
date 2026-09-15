@@ -48,6 +48,7 @@ const DeleteAccountReAuthStep = ({viewerRef, onReAuthSuccess}: Props) => {
   const hasLocal = identities?.some((i) => i?.type === AuthIdentityTypeEnum.LOCAL)
   const hasGoogle = identities?.some((i) => i?.type === AuthIdentityTypeEnum.GOOGLE)
   const hasMicrosoft = identities?.some((i) => i?.type === AuthIdentityTypeEnum.MICROSOFT)
+  const hasOIDC = identities?.some((i) => i?.type === AuthIdentityTypeEnum.OIDC)
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value)
@@ -90,6 +91,18 @@ const DeleteAccountReAuthStep = ({viewerRef, onReAuthSuccess}: Props) => {
     }
   }
 
+  const handleOIDCReAuth = async () => {
+    setSsoError(undefined)
+    setSsoSubmitting(true)
+    const response = await loginSSO('/oidc/login?returnTo=%2Fsaml-redirect')
+    setSsoSubmitting(false)
+    if ('error' in response) {
+      setSsoError(response.error)
+    } else {
+      onReAuthSuccess()
+    }
+  }
+
   // If the org has SAML configured, all auth goes through SSO
   if (samlIdP) {
     return (
@@ -98,6 +111,23 @@ const DeleteAccountReAuthStep = ({viewerRef, onReAuthSuccess}: Props) => {
           variant='primary'
           size='md'
           onClick={handleSSOReAuth}
+          disabled={ssoSubmitting}
+          className='h-10 w-full text-[15px]'
+        >
+          Sign in with SSO
+        </Button>
+        {ssoError && <StyledError className='mt-2 text-[.8125rem]'>{ssoError}</StyledError>}
+      </div>
+    )
+  }
+
+  if (hasOIDC && window.__ACTION__.AUTH_OIDC_ENABLED) {
+    return (
+      <div className='flex w-full max-w-[240px] flex-col items-stretch gap-4'>
+        <Button
+          variant='primary'
+          size='md'
+          onClick={handleOIDCReAuth}
           disabled={ssoSubmitting}
           className='h-10 w-full text-[15px]'
         >
