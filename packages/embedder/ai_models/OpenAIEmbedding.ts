@@ -21,16 +21,13 @@ export class OpenAIEmbedding extends AbstractEmbeddingsModel {
   }
   async getTokens(content: string) {
     if (!content) return []
-    const res = await fetch(this.url, {
+    const tokenizeUrl = `${this.url.replace(/\/v1\/?$/, '')}/tokenize`
+    const res = await fetch(tokenizeUrl, {
       method: 'post',
-      body: JSON.stringify({
-        model: this.modelId,
-        prompt: content
-      })
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify({model: this.modelId, prompt: content, content})
     })
-    const resJSON = await res.json()
-    console.log({resJSON})
-    const {tokens} = resJSON
+    const {tokens} = await res.json()
     return tokens
   }
 
