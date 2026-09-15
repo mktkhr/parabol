@@ -13,6 +13,8 @@ test('sanitizeReturnTo only allows same-origin absolute paths', () => {
   expect(sanitizeReturnTo('https://evil.example.com')).toBe('/meetings')
   expect(sanitizeReturnTo('')).toBe('/meetings')
   expect(sanitizeReturnTo(null)).toBe('/meetings')
+  expect(sanitizeReturnTo('/\\evil.example.com')).toBe('/meetings')
+  expect(sanitizeReturnTo('/\\/evil.example.com')).toBe('/meetings')
 })
 
 test('state survives a cookie round trip', () => {
