@@ -13,6 +13,9 @@ WORKDIR /build
 COPY . .
 RUN pnpm install --frozen-lockfile
 RUN pnpm build --no-deps
+RUN pnpm webpack --config ./scripts/webpack/prod.webworkers.config.js \
+    && pnpm webpack --config ./scripts/webpack/prod.client.config.js --env=minimize=true \
+    && pnpm webpack --config ./packages/mattermost-plugin/prod.webpack.config.js --env=minimize=true
 
 FROM node:24.21.0-trixie-slim@sha256:db3ae80f5d8df06e04dabdf7b44cbf008d32de168205fa0294444aabbc08c590
 

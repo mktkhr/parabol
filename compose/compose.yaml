@@ -97,9 +97,16 @@ services:
       llama-swap:
         condition: service_started
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:3000/health"]
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsS -o /dev/null http://localhost:3000/health &&
+          for f in build/*.js build/*.css; do
+            [ -e "$$f" ] || continue;
+            curl -fsS -o /dev/null -H 'Accept-Encoding: br' "http://localhost:3000/static/$$(basename "$$f")" || exit 1;
+          done
       interval: 10s
-      timeout: 5s
+      timeout: 180s
       retries: 30
       start_period: 60s
 
