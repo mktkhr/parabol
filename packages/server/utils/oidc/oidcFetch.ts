@@ -4,7 +4,10 @@ const oidcFetch = async (url: string, options: CustomFetchOptions) => {
   const upstream = await fetch(url, {
     method: options.method,
     headers: options.headers,
-    body: options.body as BodyInit | null | undefined,
+    body:
+      options.body instanceof URLSearchParams
+        ? options.body.toString()
+        : (options.body as BodyInit | null | undefined),
     redirect: options.redirect,
     signal: options.signal
   })
