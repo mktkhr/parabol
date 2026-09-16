@@ -13,7 +13,8 @@ WORKDIR /build
 COPY . .
 RUN pnpm install --frozen-lockfile
 RUN pnpm build --no-deps
-RUN pnpm webpack --config ./scripts/webpack/prod.webworkers.config.js \
+RUN export npm_package_version=$(node -p "require('./package.json').version") \
+    && pnpm webpack --config ./scripts/webpack/prod.webworkers.config.js \
     && pnpm webpack --config ./scripts/webpack/prod.client.config.js --env=minimize=true \
     && pnpm webpack --config ./packages/mattermost-plugin/prod.webpack.config.js --env=minimize=true
 
